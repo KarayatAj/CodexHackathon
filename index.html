@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JiraPulse AI - Intelligent Issue Triage & Prioritization</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- CSS Stylesheet -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Background Glowing Orbs for Aesthetics -->
+  <div class="glow-orb orb-1"></div>
+  <div class="glow-orb orb-2"></div>
+  <div class="glow-orb orb-3"></div>
+
+  <div class="app-container">
+    
+    <!-- Top Navigation Bar -->
+    <header class="app-header">
+      <div class="header-logo">
+        <div class="logo-pulse-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="pulse-svg">
+            <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+          </svg>
+          <div class="pulse-ring"></div>
+        </div>
+        <div class="logo-text">
+          <h1>JiraPulse <span class="accent-text">AI</span></h1>
+          <span class="version-badge">v1.0 Smart Triage</span>
+        </div>
+      </div>
+      
+      <!-- Primary Navigation Tabs -->
+      <nav class="nav-tabs">
+        <button class="nav-tab active" data-tab="kanban">
+          <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line><line x1="15" y1="3" x2="15" y2="21"></line></svg>
+          Kanban Board
+        </button>
+        <button class="nav-tab" data-tab="list">
+          <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+          Spreadsheet List
+        </button>
+        <button class="nav-tab" data-tab="ingest">
+          <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+          Ingestion Hub
+        </button>
+        <button class="nav-tab" data-tab="sync">
+          <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path></svg>
+          Sync & Export
+          <span class="sync-badge hidden" id="pending-sync-badge">0</span>
+        </button>
+      </nav>
+
+      <!-- Connections Status & Mini Profile -->
+      <div class="header-actions">
+        <div class="connection-status connected" id="jira-connection-status">
+          <span class="status-dot"></span>
+          <span class="status-label">Local Demo Mode</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="app-main">
+
+      <!-- Global KPI Statistics Grid -->
+      <section class="kpi-grid">
+        <div class="kpi-card" id="kpi-total-issues">
+          <div class="kpi-icon total-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+          </div>
+          <div class="kpi-details">
+            <span class="kpi-title">Total Triaged Issues</span>
+            <h3 class="kpi-value" id="kpi-total-count">0</h3>
+            <span class="kpi-trend neutral">Initial Ingest</span>
+          </div>
+        </div>
+
+        <div class="kpi-card critical-alert" id="kpi-critical-issues">
+          <div class="kpi-icon critical-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+          </div>
+          <div class="kpi-details">
+            <span class="kpi-title">Critical Severity Alerts</span>
+            <h3 class="kpi-value" id="kpi-critical-count">0</h3>
+            <span class="kpi-trend negative" id="kpi-critical-percent">0% of Backlog</span>
+          </div>
+          <div class="pulse-glow"></div>
+        </div>
+
+        <div class="kpi-card" id="kpi-priority-discrepancies">
+          <div class="kpi-icon discrepancy-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M4 4l5 5M12 12l9 9"></path></svg>
+          </div>
+          <div class="kpi-details">
+            <span class="kpi-title">Priority Mismatch (vs Jira)</span>
+            <h3 class="kpi-value text-amber" id="kpi-discrepancy-count">0</h3>
+            <span class="kpi-trend warning" id="kpi-discrepancy-caption">Auto-adjust suggested</span>
+          </div>
+        </div>
+
+        <div class="kpi-card" id="kpi-sla-risk">
+          <div class="kpi-icon sla-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+          </div>
+          <div class="kpi-details">
+            <span class="kpi-title">Critical SLA Safety Buffer</span>
+            <h3 class="kpi-value" id="kpi-sla-buffer">--</h3>
+            <span class="kpi-trend positive" id="kpi-sla-caption">No critical issues active</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Search and Filter Bar -->
+      <section class="filter-bar">
+        <div class="search-box">
+          <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          <input type="text" id="search-input" placeholder="Search issues by ID, Summary, or Component...">
+        </div>
+        <div class="filter-controls">
+          <label class="toggle-control">
+            <input type="checkbox" id="filter-critical">
+            <span class="toggle-slider"></span>
+            <span class="toggle-label">Critical Alerts Only</span>
+          </label>
+          <label class="toggle-control">
+            <input type="checkbox" id="filter-mismatch">
+            <span class="toggle-slider"></span>
+            <span class="toggle-label">Jira Priority Mismatch</span>
+          </label>
+          <div class="select-wrapper">
+            <select id="filter-component">
+              <option value="">All Components</option>
+              <option value="Billing & Checkout">Billing & Checkout</option>
+              <option value="Authentication">Authentication</option>
+              <option value="Database Cluster">Database Cluster</option>
+              <option value="Search Engine">Search Engine</option>
+              <option value="User Profile UI">User Profile UI</option>
+              <option value="Notification Dispatcher">Notification Dispatcher</option>
+            </select>
+          </div>
+          <button class="btn btn-secondary btn-icon" id="btn-reset-filters" title="Reset Filters">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="icon-refresh"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+          </button>
+        </div>
+      </section>
+
+      <!-- TAB VIEW 1: KANBAN BOARD -->
+      <section class="tab-pane active" id="pane-kanban">
+        <div class="kanban-board">
+          
+          <!-- Column: Highest Priority -->
+          <div class="kanban-column column-highest" data-priority="Highest">
+            <div class="column-header">
+              <div class="header-title-container">
+                <span class="priority-indicator indicator-highest"></span>
+                <h3>Highest Priority</h3>
+              </div>
+              <span class="column-count" id="count-highest">0</span>
+            </div>
+            <div class="column-cards" id="cards-highest" ondragover="allowDrop(event)" ondrop="drop(event, 'Highest')">
+              <!-- Cards dynamically inserted here -->
+            </div>
+          </div>
+
+          <!-- Column: High Priority -->
+          <div class="kanban-column column-high" data-priority="High">
+            <div class="column-header">
+              <div class="header-title-container">
+                <span class="priority-indicator indicator-high"></span>
+                <h3>High Priority</h3>
+              </div>
+              <span class="column-count" id="count-high">0</span>
+            </div>
+            <div class="column-cards" id="cards-high" ondragover="allowDrop(event)" ondrop="drop(event, 'High')">
+              <!-- Cards dynamically inserted here -->
+            </div>
+          </div>
+
+          <!-- Column: Medium Priority -->
+          <div class="kanban-column column-medium" data-priority="Medium">
+            <div class="column-header">
+              <div class="header-title-container">
+                <span class="priority-indicator indicator-medium"></span>
+                <h3>Medium Priority</h3>
+              </div>
+              <span class="column-count" id="count-medium">0</span>
+            </div>
+            <div class="column-cards" id="cards-medium" ondragover="allowDrop(event)" ondrop="drop(event, 'Medium')">
+              <!-- Cards dynamically inserted here -->
+            </div>
+          </div>
+
+          <!-- Column: Low Priority -->
+          <div class="kanban-column column-low" data-priority="Low">
+            <div class="column-header">
+              <div class="header-title-container">
+                <span class="priority-indicator indicator-low"></span>
+                <h3>Low Priority</h3>
+              </div>
+              <span class="column-count" id="count-low">0</span>
+            </div>
+            <div class="column-cards" id="cards-low" ondragover="allowDrop(event)" ondrop="drop(event, 'Low')">
+              <!-- Cards dynamically inserted here -->
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- TAB VIEW 2: SPREADSHEET LIST -->
+      <section class="tab-pane" id="pane-list">
+        <div class="table-container glass-container">
+          <table class="issues-table">
+            <thead>
+              <tr>
+                <th style="width: 110px;">Issue Key</th>
+                <th>Summary</th>
+                <th style="width: 150px;">Component</th>
+                <th style="width: 120px;">Original Jira</th>
+                <th style="width: 140px;">AI Classifier Suggestion</th>
+                <th style="width: 110px;">Criticality</th>
+                <th style="width: 100px;">Status</th>
+                <th style="width: 80px; text-align: center;">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="issues-table-body">
+              <!-- Rows dynamically inserted here -->
+            </tbody>
+          </table>
+          <div class="empty-table-state hidden" id="empty-table-state">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="empty-state-icon"><circle cx="12" cy="12" r="10"></circle><line x1="8" y1="12" x2="16" y2="12"></line></svg>
+            <p>No issues match the selected filters or search terms.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB VIEW 3: INGESTION HUB -->
+      <section class="tab-pane" id="pane-ingest">
+        <div class="ingest-grid">
+          
+          <!-- Ingress Options Panel -->
+          <div class="ingest-panel-left glass-container">
+            <h2>Import Jira Issues</h2>
+            <p class="panel-subtitle">Select a data source or preset template to feed the AI Classifier engine.</p>
+            
+            <div class="preset-selector-section">
+              <h3>1. Quick Demo Templates</h3>
+              <div class="presets-grid">
+                <button class="preset-btn" id="preset-production-down">
+                  <div class="preset-header">
+                    <span class="preset-title">🚨 System Critical Outage</span>
+                    <span class="preset-size">8 Issues</span>
+                  </div>
+                  <p class="preset-desc">Payment gateways failing, server cluster memory leaks, authentication broken.</p>
+                </button>
+                
+                <button class="preset-btn" id="preset-backlog-triage">
+                  <div class="preset-header">
+                    <span class="preset-title">⚙️ Development Backlog</span>
+                    <span class="preset-size">10 Issues</span>
+                  </div>
+                  <p class="preset-desc">General feature requests, styling fixes, non-breaking user profile bugs.</p>
+                </button>
+
+                <button class="preset-btn" id="preset-mixed-batch">
+                  <div class="preset-header">
+                    <span class="preset-title">⚡ Mixed Priority Tickets</span>
+                    <span class="preset-size">12 Issues</span>
+                  </div>
+                  <p class="preset-desc">Balanced set of critical security alerts, user issues, and medium priority tickets.</p>
+                </button>
+              </div>
+            </div>
+
+            <div class="manual-paste-section">
+              <h3>2. Custom Raw Data Paste</h3>
+              <p class="section-help">Paste JIRA export data in JSON format or copy-paste CSV issue descriptions.</p>
+              <textarea id="import-textarea" placeholder='[
+  {
+    "key": "PAY-203",
+    "summary": "Stripe checkout failing with 500 error on checkout page",
+    "description": "Users are getting gateway errors when processing checkout payments. This is affecting all premium subscriptions.",
+    "originalPriority": "Medium",
+    "component": "Billing & Checkout",
+    "status": "To Do"
+  }
+]'></textarea>
+              <div class="input-actions">
+                <button class="btn btn-primary" id="btn-parse-paste">Run AI Classification Engine</button>
+                <button class="btn btn-secondary" id="btn-clear-paste">Clear Paste Area</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Ingress Right Panel: Connect Mock API / Terminal Console -->
+          <div class="ingest-panel-right glass-container">
+            <h2>Simulate JIRA API Sync</h2>
+            <p class="panel-subtitle">Link this dashboard to a mock JIRA service environment.</p>
+
+            <form class="jira-mock-form" onsubmit="event.preventDefault();">
+              <div class="form-group">
+                <label for="jira-url">JIRA Site Instance URL</label>
+                <input type="text" id="jira-url" value="https://company-net.atlassian.net" placeholder="https://your-domain.atlassian.net">
+              </div>
+              <div class="form-row">
+                <div class="form-group col-6">
+                  <label for="jira-username">Account Email</label>
+                  <input type="email" id="jira-username" value="lead.triage@company.com" placeholder="email@atlassian.net">
+                </div>
+                <div class="form-group col-6">
+                  <label for="jira-token">API Token / OAuth Credentials</label>
+                  <input type="password" id="jira-token" value="••••••••••••••••••••••••" placeholder="ATATT3xFfGF0...">
+                </div>
+              </div>
+              <button class="btn btn-accent btn-full" id="btn-mock-connect">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="btn-icon-svg"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg>
+                Sync Directly via JIRA Cloud
+              </button>
+            </form>
+
+            <div class="console-box">
+              <div class="console-header">
+                <span class="console-title">Classifier Parsing Feed</span>
+                <span class="console-dot-indicator"></span>
+              </div>
+              <div class="console-body" id="console-output">
+                <div class="console-line system-line">[SYSTEM] System initialized. Ready to process issues.</div>
+                <div class="console-line instruction-line">[INFO] Load a demo preset or trigger JIRA sync to view the AI engine audit.</div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- TAB VIEW 4: SYNC & EXPORT -->
+      <section class="tab-pane" id="pane-sync">
+        <div class="sync-grid">
+          
+          <div class="sync-status-card glass-container">
+            <h2>Triage Sync Center</h2>
+            <p class="panel-subtitle">Review local modifications and prepare updates for the JIRA cloud.</p>
+            
+            <div class="sync-stats-box">
+              <div class="sync-stat">
+                <span class="stat-num" id="sync-stat-modified">0</span>
+                <span class="stat-lbl">Modified Items</span>
+              </div>
+              <div class="sync-stat">
+                <span class="stat-num text-critical" id="sync-stat-critical">0</span>
+                <span class="stat-lbl">Critical Alerts</span>
+              </div>
+              <div class="sync-stat">
+                <span class="stat-num text-amber" id="sync-stat-accepted">0</span>
+                <span class="stat-lbl">Accepted Recs</span>
+              </div>
+            </div>
+
+            <div class="sync-actions-panel">
+              <h3>Sync Changes to JIRA Cloud</h3>
+              <p class="sync-desc">This action updates JIRA priority custom fields and labels tickets containing critical safety alerts on your JIRA Cloud instance.</p>
+              
+              <div class="progress-bar-wrapper hidden" id="sync-progress-wrapper">
+                <div class="progress-info">
+                  <span id="sync-progress-status">Uploading metadata overrides...</span>
+                  <span id="sync-progress-pct">0%</span>
+                </div>
+                <div class="progress-bar-track">
+                  <div class="progress-bar-fill" id="sync-progress-fill" style="width: 0%"></div>
+                </div>
+              </div>
+
+              <div class="sync-buttons">
+                <button class="btn btn-accent" id="btn-sync-jira">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="btn-icon-svg"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path></svg>
+                  Push Local Overrides to JIRA
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="export-options-card glass-container">
+            <h2>Export Dataset</h2>
+            <p class="panel-subtitle">Download the categorized issues for offline review or compliance reporting.</p>
+            
+            <div class="export-options-grid">
+              <div class="export-card">
+                <div class="export-format">JSON</div>
+                <p class="export-card-desc">Download detailed triage metadata, including JIRA priorities, AI suggestion overrides, and critical classifications.</p>
+                <button class="btn btn-primary btn-full" id="btn-export-json">Download JSON Payload</button>
+              </div>
+
+              <div class="export-card">
+                <div class="export-format">CSV</div>
+                <p class="export-card-desc">Download a standardized spreadsheet including issue keys, summaries, classification flags, and calculated resolution times.</p>
+                <button class="btn btn-primary btn-full" id="btn-export-csv">Download Triage CSV</button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+    </main>
+
+    <!-- RIGHT DRAWER: ISSUE DETAIL SIDEBAR -->
+    <aside class="detail-sidebar" id="issue-detail-sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-meta">
+          <span class="sidebar-issue-key" id="sidebar-key">PROJ-XXX</span>
+          <span class="status-badge" id="sidebar-jira-status">To Do</span>
+        </div>
+        <button class="sidebar-close-btn" id="sidebar-close">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+
+      <div class="sidebar-content">
+        <!-- Title and Description -->
+        <div class="sidebar-section">
+          <h2 class="sidebar-issue-summary" id="sidebar-summary">Loading Issue Details...</h2>
+          <div class="sidebar-meta-pills">
+            <span class="meta-pill" id="sidebar-component-pill">No Component</span>
+            <span class="meta-pill" id="sidebar-original-priority-pill">Jira: Medium</span>
+          </div>
+        </div>
+
+        <div class="sidebar-section">
+          <h4 class="section-title">Description</h4>
+          <p class="sidebar-issue-description" id="sidebar-description">No description provided.</p>
+        </div>
+
+        <!-- AI CLASSIFIER BOX -->
+        <div class="sidebar-section ai-analyzer-box">
+          <div class="ai-box-header">
+            <div class="ai-box-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="ai-icon-pulse"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+              <span>Classifier Engine Review</span>
+            </div>
+            <span class="ai-accuracy-badge">AI Confidence: 94%</span>
+          </div>
+
+          <div class="ai-classification-badges">
+            <div class="ai-badge-col">
+              <span class="badge-lbl">Suggested Priority</span>
+              <div class="ai-badge-val" id="sidebar-ai-priority">Highest</div>
+            </div>
+            <div class="ai-badge-col">
+              <span class="badge-lbl">Criticality Status</span>
+              <div class="ai-badge-val" id="sidebar-ai-critical">Critical Alert</div>
+            </div>
+          </div>
+
+          <div class="ai-rational-text">
+            <h5 class="rational-title">Heuristic Reasoning</h5>
+            <p id="sidebar-ai-explanation">Calculating reasoning parameters...</p>
+          </div>
+        </div>
+
+        <!-- TRIAGE OVERRIDES -->
+        <div class="sidebar-section">
+          <h4 class="section-title">Triage Modifications</h4>
+          
+          <div class="form-group">
+            <label for="override-priority">Override Severity Priority</label>
+            <div class="select-wrapper">
+              <select id="override-priority">
+                <option value="Highest">Highest Priority</option>
+                <option value="High">High Priority</option>
+                <option value="Medium">Medium Priority</option>
+                <option value="Low">Low Priority</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="toggle-control override-toggle">
+              <input type="checkbox" id="override-critical">
+              <span class="toggle-slider"></span>
+              <span class="toggle-label-bold">Mark as System-Critical Alert</span>
+            </label>
+          </div>
+
+          <div class="sidebar-actions">
+            <button class="btn btn-accent btn-full" id="btn-save-override">Apply Triage Overrides</button>
+            <button class="btn btn-secondary btn-full" id="btn-accept-ai">Accept AI Recommendations</button>
+          </div>
+        </div>
+      </div>
+    </aside>
+    <!-- Overlay for closing drawer -->
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+  </div>
+
+  <!-- Main JavaScript File -->
+  <script src="app.js"></script>
+</body>
+</html>
